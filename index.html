@@ -301,7 +301,7 @@ async function verifyVoter(){
   try{
     const result = await api({query:{action:'checkRoom',room}});
     if(!result.eligible) return showMsg('login-msg','Room '+room+' is not on the eligible voters list.');
-    if(!result.canVote)  return showMsg('login-msg','Room '+room+' has already used all its allowed votes.');
+    
     const awards = await api({query:{action:'getAwards'}});
     if(!awards.length) return showMsg('login-msg','No award categories have been set up yet. Check back soon.');
     state.voter={name,room}; state.awards=awards; state.ballot={}; state.currentAwardIndex=0;
