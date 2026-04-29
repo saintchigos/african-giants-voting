@@ -128,6 +128,10 @@ html,body{height:100%;background:var(--dark);color:var(--text);font-family:'Rale
 .legend{display:flex;gap:.75rem;margin-bottom:.75rem;font-size:11px;flex-wrap:wrap}
 .legend-item{display:flex;align-items:center;gap:.3rem;color:var(--text-muted)}
 .legend-dot{width:8px;height:8px;border-radius:50%}
+
+.paste-zone{display:flex;align-items:center;gap:.5rem;padding:.6rem .75rem;background:rgba(74,110,245,.06);border:1.5px dashed rgba(74,110,245,.35);border-radius:6px;cursor:pointer;font-size:12px;color:var(--text-muted);transition:.2s;min-height:44px;outline:none;margin-bottom:.4rem}
+.paste-zone:focus{border-color:var(--blue-light);background:rgba(74,110,245,.1);color:var(--text)}
+.paste-zone.has-image{border-style:solid;border-color:var(--blue-light)}
 </style>
 </head>
 <body>
@@ -468,8 +472,10 @@ function toggleEdit(nomineeId, name, imageUrl){
 }
 
 async function saveNominee(nomineeId){
-  const name     = document.getElementById('edit-name-'+nomineeId).value.trim();
-  const imageUrl = document.getElementById('edit-img-'+nomineeId).value.trim();
+  const name      = document.getElementById('edit-name-'+nomineeId).value.trim();
+  const pasteData = document.getElementById('edit-imgdata-'+nomineeId)?.value.trim();
+  const urlData   = document.getElementById('edit-img-'+nomineeId)?.value.trim();
+  const imageUrl  = pasteData || urlData || '';
   if(!name) return showMsg('admin-msg','Name cannot be empty.');
   try{
     await api({method:'POST',body:{action:'updateNominee',nomineeId,name,imageUrl,password:''}});
@@ -519,8 +525,10 @@ async function removeAward(awardId){
 }
 
 async function addNominee(awardId){
-  const name=document.getElementById('nom-name-'+awardId).value.trim();
-  const imageUrl=document.getElementById('nom-img-'+awardId).value.trim();
+  const name     = document.getElementById('nom-name-'+awardId).value.trim();
+  const pasteData= document.getElementById('paste-imgdata-'+awardId)?.value.trim();
+  const urlData  = document.getElementById('nom-img-'+awardId)?.value.trim();
+  const imageUrl = pasteData || urlData || '';
   if(!name) return showMsg('admin-msg','Enter a nominee name.');
   try{ await api({method:'POST',body:{action:'addNominee',awardId,name,imageUrl,password:''}}); renderSetup(); }
   catch(e){ showMsg('admin-msg','Error adding nominee.'); }
@@ -605,6 +613,49 @@ async function clearRoomFlag(room){
   try{ await api({method:'POST',body:{action:'clearFlag',room,password:''}}); renderFlagged(); }
   catch(e){ showMsg('admin-msg','Error.'); }
 }
+
+// ── IMAGE PASTE ───────────────────────────────────────────────
+function handlePaste(event, previewId, dataId) {
+  const items = event.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      event.preventDefault();
+      const file = item.getAsFile();
+      compressImage(file, (base64) => {
+        const preview = document.getElementById(previewId);
+        const dataEl  = document.getElementById(dataId);
+        const zone    = event.currentTarget;
+        const hint    = zone.querySelector('span');
+        if (preview) { preview.src = base64; preview.style.display = 'block'; }
+        if (dataEl)  { dataEl.value = base64; }
+        if (hint)    { hint.textContent = '✓ Photo pasted'; }
+        if (zone)    { zone.classList.add('has-image'); }
+      });
+      break;
+    }
+  }
+}
+
+function compressImage(file, callback) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 300;
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
+      else       { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.75));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 </script>
 </body>
 </html>
