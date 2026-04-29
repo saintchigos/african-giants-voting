@@ -636,7 +636,7 @@ async function clearRoomFlag(room){
 
 // ── IMAGE PASTE ───────────────────────────────────────────────
 function handlePaste(event, previewId, dataId) {
-  const items = event.clipboardData?.items;
+  const items = (event.clipboardData || window.clipboardData)?.items;
   if (!items) return;
   for (const item of items) {
     if (item.type.startsWith('image/')) {
@@ -645,14 +645,14 @@ function handlePaste(event, previewId, dataId) {
       compressImage(file, (base64) => {
         const preview = document.getElementById(previewId);
         const dataEl  = document.getElementById(dataId);
-        const zone    = event.currentTarget;
+        const zone    = event.currentTarget || event.target;
         const hint    = zone.querySelector('span');
         if (preview) { preview.src = base64; preview.style.display = 'block'; }
         if (dataEl)  { dataEl.value = base64; }
         if (hint)    { hint.textContent = '✓ Photo pasted'; }
         if (zone)    { zone.classList.add('has-image'); }
       });
-      break;
+      return;
     }
   }
 }
@@ -675,7 +675,18 @@ function compressImage(file, callback) {
   };
   reader.readAsDataURL(file);
 }
-
+// Global paste listener - catches Ctrl+V anywhere on page
+document.addEventListener('paste', function(e) {
+  const focused = document.activeElement;
+  if (focused && focused.classList.contains('paste-zone')) {
+    const onpaste = focused.getAttribute('onpaste');
+    if (onpaste) {
+      // Extract the argument IDs from the onpaste attribute
+      const match = onpaste.match(/handlePaste\(event,'([^']+)','([^']+)'\)/);
+      if (match) handlePaste(e, match[1], match[2]);
+    }
+  }
+});
 </script>
 </body>
 </html>
