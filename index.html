@@ -412,31 +412,51 @@ async function renderSetup(){
     : '<p style="font-size:13px;color:var(--text-muted);margin-bottom:.75rem">No rooms added yet. Load defaults or add manually.</p>';
 
   const awardsHTML = awards.map(a=>{
-    const nomRows = a.nominees.map(n=>
-      `<div class="nominee-row-admin" id="nom-row-${n.id}">
+    const nomRows = a.nominees.map(n=>{
+      const thumb = n.image_url
+        ? `<img src="${n.image_url}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`
+        : `<div style="width:32px;height:32px;border-radius:50%;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--blue-light);flex-shrink:0">${n.name.charAt(0)}</div>`;
+      return `<div class="nominee-row-admin" id="nom-row-${n.id}">
+        ${thumb}
         <span class="nom-name">${n.name}</span>
-        <button class="btn-warn btn-sm" onclick="toggleEdit('${n.id}','${n.name}','${n.image_url||''}')">Edit</button>
+        <button class="btn-warn btn-sm" onclick="toggleEdit('${n.id}')">Edit</button>
         <button class="btn-danger btn-sm" onclick="removeNominee('${n.id}')">Remove</button>
       </div>
       <div class="nominee-edit-form" id="edit-form-${n.id}">
         <input type="text" id="edit-name-${n.id}" placeholder="Nominee name" value="${n.name}">
-        <input type="text" id="edit-img-${n.id}" placeholder="Image URL (optional)" value="${n.image_url||''}">
+        <div class="paste-zone" id="edit-paste-${n.id}" tabindex="0"
+          onclick="this.focus()"
+          onpaste="handlePaste(event,'edit-preview-${n.id}','edit-imgdata-${n.id}')">
+          <span id="edit-paste-hint-${n.id}">📋 Click here then Ctrl+V to paste photo</span>
+          <img id="edit-preview-${n.id}" style="display:none;max-height:55px;border-radius:4px">
+        </div>
+        <input type="hidden" id="edit-imgdata-${n.id}" value="${n.image_url||''}">
+        <input type="text" id="edit-img-${n.id}" placeholder="Or paste image URL here" value="">
         <div class="nominee-edit-btns">
           <button class="btn-success btn-sm" onclick="saveNominee('${n.id}')">Save</button>
           <button class="btn-ghost btn-sm" onclick="toggleEdit('${n.id}')">Cancel</button>
         </div>
-      </div>`
-    ).join('');
+      </div>`;
+    }).join('');
     return `<div class="award-item">
       <div class="award-item-header">
         <span class="award-item-name">${a.emoji||''} ${a.name}</span>
         <button class="btn-danger btn-sm" onclick="removeAward('${a.id}')">Remove award</button>
       </div>
       <div class="nominees-admin-list">${nomRows||'<p style="font-size:12px;color:var(--text-muted)">No nominees yet</p>'}</div>
-      <div class="add-nominee-row">
-        <input type="text" id="nom-name-${a.id}" placeholder="Add nominee name">
-        <input type="text" id="nom-img-${a.id}"  placeholder="Image URL (optional)">
-        <button class="btn-success btn-sm" onclick="addNominee('${a.id}')">Add</button>
+      <div style="margin-top:.5rem">
+        <div style="display:flex;gap:.5rem;margin-bottom:.4rem">
+          <input type="text" id="nom-name-${a.id}" placeholder="Nominee name" style="flex:1;padding:8px 10px;background:var(--surface);border:0.5px solid var(--border);border-radius:4px;color:var(--text);font-family:'Raleway',sans-serif;font-size:13px;outline:none">
+          <button class="btn-success btn-sm" onclick="addNominee('${a.id}')">Add</button>
+        </div>
+        <div class="paste-zone" id="paste-zone-${a.id}" tabindex="0"
+          onclick="this.focus()"
+          onpaste="handlePaste(event,'paste-preview-${a.id}','paste-imgdata-${a.id}')">
+          <span id="paste-hint-${a.id}">📋 Click here then Ctrl+V to paste nominee photo (optional)</span>
+          <img id="paste-preview-${a.id}" style="display:none;max-height:55px;border-radius:4px">
+        </div>
+        <input type="hidden" id="paste-imgdata-${a.id}">
+        <input type="text" id="nom-img-${a.id}" placeholder="Or type/paste image URL here (optional)" style="width:100%;margin-top:.4rem;padding:7px 10px;background:var(--surface);border:0.5px solid var(--border);border-radius:4px;color:var(--text);font-family:'Raleway',sans-serif;font-size:12px;outline:none">
       </div>
     </div>`;
   }).join('');
