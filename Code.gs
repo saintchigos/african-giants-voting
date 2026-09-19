@@ -3,7 +3,7 @@
 //  Paste this entire file into Google Apps Script
 // ============================================================
 
-const ADMIN_PASSWORD = "";
+const ADMIN_PASSWORD = ScriptProperties.getProperty('ADMIN_PASSWORD') || "";
 
 // Room configuration
 const SINGLE_ROOMS = [77,78,79,81,82,84,85,88,89,91,92,94,95,96,97,98,99,

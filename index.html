@@ -252,6 +252,7 @@ html,body{height:100%;background:var(--dark);color:var(--text);font-family:'Rale
 </div>
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztX3XtF6y-lKIK-5zHfxIMHvR83bo_y2P4t7ous-IfRQ27m9a1oHSEXKAUQQzXa8R-/exec";
+const ADMIN_PASSWORD = ""; // set your admin password here
 
 // Africa Male default rooms
 const DEFAULT_ROOMS = [
@@ -364,7 +365,7 @@ async function submitVote(){
 }
 
 function adminLogin(){
-  if(document.getElementById('a-pass').value!=='') return showMsg('admin-login-msg','Incorrect password.');
+  if(document.getElementById('a-pass').value!==ADMIN_PASSWORD) return showMsg('admin-login-msg','Incorrect password.');
   document.getElementById('a-pass').value='';
   go('admin');
 }
@@ -498,7 +499,7 @@ async function saveNominee(nomineeId){
   const imageUrl  = pasteData || urlData || '';
   if(!name) return showMsg('admin-msg','Name cannot be empty.');
   try{
-    await api({method:'POST',body:{action:'updateNominee',nomineeId,name,imageUrl,password:''}});
+    await api({method:'POST',body:{action:'updateNominee',nomineeId,name,imageUrl,password:ADMIN_PASSWORD}});
     renderSetup();
   }catch(e){ showMsg('admin-msg','Error saving changes.'); }
 }
@@ -508,7 +509,7 @@ async function addRoom(){
   const type = document.getElementById('new-room-type').value;
   if(!room||isNaN(room)) return showMsg('admin-msg','Enter a valid room number.');
   try{
-    const res = await api({method:'POST',body:{action:'addRoom',room,type,password:''}});
+    const res = await api({method:'POST',body:{action:'addRoom',room,type,password:ADMIN_PASSWORD}});
     if(res.error) return showMsg('admin-msg',res.error);
     renderSetup();
   }catch(e){ showMsg('admin-msg','Error adding room.'); }
@@ -516,7 +517,7 @@ async function addRoom(){
 
 async function removeRoom(room){
   if(!confirm('Remove room '+room+' from the eligible list?')) return;
-  try{ await api({method:'POST',body:{action:'removeRoom',room,password:''}}); renderSetup(); }
+  try{ await api({method:'POST',body:{action:'removeRoom',room,password:ADMIN_PASSWORD}}); renderSetup(); }
   catch(e){ showMsg('admin-msg','Error removing room.'); }
 }
 
@@ -524,7 +525,7 @@ async function loadDefaultRooms(){
   if(!confirm('Load all Africa Male default rooms (77-153)? This will add singles, doubles and room 100 special.')) return;
   showMsg('admin-msg','Loading defaults...','ok');
   try{
-    await api({method:'POST',body:{action:'bulkAddRooms',rooms:DEFAULT_ROOMS,password:''}});
+    await api({method:'POST',body:{action:'bulkAddRooms',rooms:DEFAULT_ROOMS,password:ADMIN_PASSWORD}});
     showMsg('admin-msg','Default rooms loaded!','ok');
     renderSetup();
   }catch(e){ showMsg('admin-msg','Error loading defaults.'); }
@@ -534,13 +535,13 @@ async function addAward(){
   const name=document.getElementById('new-award-name').value.trim();
   const emoji=document.getElementById('new-award-emoji').value.trim();
   if(!name) return showMsg('admin-msg','Enter an award name.');
-  try{ await api({method:'POST',body:{action:'addAward',name,emoji,password:''}}); renderSetup(); }
+  try{ await api({method:'POST',body:{action:'addAward',name,emoji,password:ADMIN_PASSWORD}}); renderSetup(); }
   catch(e){ showMsg('admin-msg','Error adding award.'); }
 }
 
 async function removeAward(awardId){
   if(!confirm('Remove this award and all its nominees?')) return;
-  try{ await api({method:'POST',body:{action:'removeAward',awardId,password:''}}); renderSetup(); }
+  try{ await api({method:'POST',body:{action:'removeAward',awardId,password:ADMIN_PASSWORD}}); renderSetup(); }
   catch(e){ showMsg('admin-msg','Error.'); }
 }
 
@@ -550,13 +551,13 @@ async function addNominee(awardId){
   const urlData  = document.getElementById('nom-img-'+awardId)?.value.trim();
   const imageUrl = pasteData || urlData || '';
   if(!name) return showMsg('admin-msg','Enter a nominee name.');
-  try{ await api({method:'POST',body:{action:'addNominee',awardId,name,imageUrl,password:''}}); renderSetup(); }
+  try{ await api({method:'POST',body:{action:'addNominee',awardId,name,imageUrl,password:ADMIN_PASSWORD}}); renderSetup(); }
   catch(e){ showMsg('admin-msg','Error adding nominee.'); }
 }
 
 async function removeNominee(nomineeId){
   if(!confirm('Remove this nominee?')) return;
-  try{ await api({method:'POST',body:{action:'removeNominee',nomineeId,password:''}}); renderSetup(); }
+  try{ await api({method:'POST',body:{action:'removeNominee',nomineeId,password:ADMIN_PASSWORD}}); renderSetup(); }
   catch(e){ showMsg('admin-msg','Error.'); }
 }
 
@@ -564,7 +565,7 @@ async function removeNominee(nomineeId){
 async function renderResults(){
   const c=document.getElementById('admin-content');
   let data=[];
-  try{ data=await api({query:{action:'getResults',password:''}}); }catch(e){}
+  try{ data=await api({query:{action:'getResults',password:ADMIN_PASSWORD}}); }catch(e){}
   const html=data.map(award=>{
     const maxV=Math.max(...award.nominees.map(n=>n.votes||0),1);
     const bars=award.nominees.sort((a,b)=>(b.votes||0)-(a.votes||0)).map(n=>{
@@ -583,7 +584,7 @@ async function renderResults(){
 async function renderVoters(){
   const c=document.getElementById('admin-content');
   let voters=[];
-  try{ voters=await api({query:{action:'getVoters',password:''}}); }catch(e){}
+  try{ voters=await api({query:{action:'getVoters',password:ADMIN_PASSWORD}}); }catch(e){}
   const flagged=voters.filter(v=>v.flagged==='FLAGGED').length;
   const rows=voters.map(v=>{
     const ts=v.timestamp?new Date(v.timestamp).toLocaleString():'';
@@ -601,7 +602,7 @@ async function renderVoters(){
 async function renderFlagged(){
   const c=document.getElementById('admin-content');
   let flagged=[];
-  try{ flagged=await api({query:{action:'getFlagged',password:''}}); }catch(e){}
+  try{ flagged=await api({query:{action:'getFlagged',password:ADMIN_PASSWORD}}); }catch(e){}
   const badge=document.getElementById('flag-badge');
   if(badge) badge.textContent=flagged.length?`(${flagged.length})`:'';
   if(!flagged.length){ c.innerHTML='<p style="font-size:13px;color:var(--text-muted)">No flagged rooms. All clear.</p>'; return; }
@@ -624,13 +625,13 @@ async function renderFlagged(){
 
 async function removeVoter(voterId){
   if(!confirm('Remove this voter and their votes permanently?')) return;
-  try{ await api({method:'POST',body:{action:'removeVoter',voterId,password:''}}); renderFlagged(); }
+  try{ await api({method:'POST',body:{action:'removeVoter',voterId,password:ADMIN_PASSWORD}}); renderFlagged(); }
   catch(e){ showMsg('admin-msg','Error.'); }
 }
 
 async function clearRoomFlag(room){
   if(!confirm('Clear the flag for room '+room+'? Only do this after verifying all voters are legitimate.')) return;
-  try{ await api({method:'POST',body:{action:'clearFlag',room,password:''}}); renderFlagged(); }
+  try{ await api({method:'POST',body:{action:'clearFlag',room,password:ADMIN_PASSWORD}}); renderFlagged(); }
   catch(e){ showMsg('admin-msg','Error.'); }
 }
 
